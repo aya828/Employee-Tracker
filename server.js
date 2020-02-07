@@ -1,6 +1,6 @@
-var mysql = require("mysql");
+const mysql = require("mysql");
 
-var connection = mysql.createConnection({
+const connection = mysql.createConnection({
   host: "localhost",
 
   // Your port; if not 3306
@@ -19,6 +19,26 @@ connection.connect(function(err) {
   console.log("connected as id " + connection.threadId + "\n");
   // createEmployee();
 });
+
+const questions = [
+  {
+    type: 'choice',
+    name: 'choice',
+    message: 'What would you like to do?',
+    choices: ['View all employees', 'Add employee', 'Update employee', 'Delete employee']
+  }
+]
+
+// Function to see exitsing employee table
+function showEmployees() {
+  // console.log("Selecting all products...\n");
+  // connection.query("SELECT * FROM products", function(err, res) {
+  //   if (err) throw err;
+  //   // Log all results of the SELECT statement
+  //   console.log(res);
+  //   connection.end();
+  // });
+}
 
 // Function for creating new employee
 function createEmployee() {
