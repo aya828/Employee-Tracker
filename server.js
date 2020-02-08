@@ -1,4 +1,6 @@
 const mysql = require("mysql");
+const inquirer = require("inquirer");
+const cTable = require("console.table");
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -17,20 +19,97 @@ const connection = mysql.createConnection({
 connection.connect(function(err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId + "\n");
-  // createEmployee();
+  inquirer.prompt(questions)
+  .then (function(resp) {
+    switch (resp.choice) {
+      case 'View all employees':
+        showEmployees();
+        break;
+      case 'Add employee':
+        createEmployee();
+        break;
+      case 'Update employee':
+        updateEmployee();
+        break;
+      case 'Delete employee':
+        deleteEmployee();
+        break;
+    }
+  });
 });
+
+
 
 const questions = [
   {
-    type: 'choice',
+    type: 'list',
     name: 'choice',
     message: 'What would you like to do?',
     choices: ['View all employees', 'Add employee', 'Update employee', 'Delete employee']
   }
 ]
 
+const addEmp = [
+  {
+    type: "input",
+    name: "first_name",
+    message: "What is the employee's first name?"
+  },
+  {
+    type: "input",
+    name: "last_name",
+    message: "What is the employee's last name?"
+  },
+  {
+    type: "input",
+    name: "role",
+    message: "What is the employee's role?"
+  },
+  {
+    type: "input",
+    name: "department",
+    message: "What department is the employee in?"
+  },
+  {
+    type: "input",
+    name: "salary",
+    message: "What is the employee's salary?"
+  },
+  {
+    type: "input",
+    name: "manager",
+    message: "Who is the employee's manager?",
+  }
+]
+
+const updateEmp = [
+  {
+    type: "choice",
+    name: "update",
+    message: "Which employee role would you like to update?"
+  }
+]
+
 // Function to see exitsing employee table
 function showEmployees() {
+  connection.query("SELECT * FROM employee", function(err, res) {
+    console.table([{
+      id: "SELECT id FROM employee",
+      first_name: "SELECT first_name FROM employee",
+      last_name: "SELECT last_name FROM employee",
+      title: "SELECT title FROM role",
+      department: "SELECT name FROM department",
+      salary: "SELECT salary FROM role",
+      manager: "SELECT manager FROM employee"
+    }])
+    
+    if (err) throw err;
+    // Log all results of the SELECT statement
+    console.log(res);
+    connection.end();
+  });
+  
+  }
   // console.log("Selecting all products...\n");
   // connection.query("SELECT * FROM products", function(err, res) {
   //   if (err) throw err;
@@ -38,10 +117,26 @@ function showEmployees() {
   //   console.log(res);
   //   connection.end();
   // });
-}
+
 
 // Function for creating new employee
 function createEmployee() {
+
+  inquirer.prompt(addEmp)
+
+  .then(function(response) {
+    var query = connection.query(
+      {
+        first_name: response.first_name,
+        last_name: response.last_name,
+        title: response.role,
+        department: response.department,
+        salary: response.salary,
+        manager: response.manager
+      }
+    )
+    console.log(query.sql)
+  })
   // console.log("Inserting a new product...\n");
   // var query = connection.query(
   //   "INSERT INTO products SET ?",
