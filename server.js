@@ -97,19 +97,15 @@ function createEmployee() {
     if(response.role === "Sales Specialist") {
       role_id = 1;
       manager_id = 1;
-      department_id = 1;
     } else if(response.role === "Sales") {
-      role_id = 2;
-      manager_id = 2;
-      department_id = 2;
-    } else if(response.role === "Engineer") {
       role_id = 3;
       manager_id = 3;
-      department_id = 3;
+    } else if(response.role === "Engineer") {
+      role_id = 2;
+      manager_id = 2;
     } else if(response.role === "Manager") {
       role_id = 4;
       manager_id = 4;
-      department_id = 4;
     }
     let query = connection.query(
       "INSERT INTO employee SET ?",
@@ -130,49 +126,93 @@ function createEmployee() {
 
 // Function to update employee information (department, salary, role, etc.)
 function updateEmployee() {
-  connection.query("SELECT id, first_name, last_name FROM employee", function(err, results) {
+  let query = connection.query("SELECT e.id, e.first_name, e.last_name FROM employee e", function(err, results) {
     if (err) throw err;
-    // once you have the items, prompt the user for which they'd like to bid on
+    // Prompt user to select employee by ID
     inquirer
       .prompt([
         {
-          name: "choice",
+          name: "update",
           type: "rawlist",
           choices: function() {
-            var choiceArray = [];
+            const choiceArray = [];
             for (var i = 0; i < results.length; i++) {
-              choiceArray.push(results[i].id, results[i].first_name, results[i].last_name);
+              let data = results[i].first_name + " " + results[i].last_name;
+              choiceArray.push(data);
             }
-            return console.table(results.id, results.first_name, results.last_name);
+            return choiceArray;
           },
           message: "Who's role would you like to update?"
+        },
+        {
+          type: "list",
+          name: "newRole",
+          message: "What is their new role:",
+          choices: ['Sales Specialist', 'Sales', 'Engineer', 'Manager']
         }
       ])
       .then(function(answer) {
-        // get the information of the chosen item
-        var chosenItem;
-        for (var i = 0; i < results.length; i++) {
-          if (results[i].item_name === answer.choice) {
-            chosenItem = results[i];
-          }
+        let role_id;
+        if(answer.newRole === "Sales Specialist") {
+          role_id = 1;
+        } else if(answer.newRole === "Sales") {
+          role_id = 3;
+        } else if(answer.newRole === "Engineer") {
+          role_id = 2;
+        } else if(answer.newRole === "Manager") {
+          role_id = 4;
         }
-      })    
+        let answerFirstName = answer.update.split(" ")[0];
+        let answerLastName = answer.update.split(" ")[1];
+        const employee = results.find(element => element.first_name === answerFirstName && element.last_name === answerLastName);
+        // get the information of the chosen item1
+        query = connection.query(
+          "UPDATE employee SET role_id = ? WHERE id = ?",
+          [role_id, employee.id],
+          function(err, res) {
+            if (err) throw err;
+            console.log(res.affectedRows + " employee role updated!\n");
+            startQuestions(); 
+          }
+        );
+      })
     })
   }
     
 // Function to delete existing employee
-// function deleteEmployee() {
-  // console.log("Deleting all strawberry icecream...\n");
-  // connection.query(
-  //   "DELETE FROM products WHERE ?",
-  //   {
-  //     flavor: "strawberry"
-  //   },
-  //   function(err, res) {
-  //     if (err) throw err;
-  //     console.log(res.affectedRows + " products deleted!\n");
-  //     // Call readProducts AFTER the DELETE completes
-  //     readProducts();
-  //   }
-  // );
-// }
+function deleteEmployee() {
+  let query = connection.query("SELECT e.id, e.first_name, e.last_name FROM employee e", function(err, results) {
+    if (err) throw err;
+    // Prompt user to select employee by ID
+    inquirer
+      .prompt([
+        {
+          name: "update",
+          type: "rawlist",
+          choices: function() {
+            const choiceArray = [];
+            for (var i = 0; i < results.length; i++) {
+              let data = results[i].first_name + " " + results[i].last_name;
+              choiceArray.push(data);
+            }
+            return choiceArray;
+          },
+          message: "Who would you like to remove?"
+        }
+      ])
+      .then(function(answer) {
+        let answerFirstName = answer.update.split(" ")[0];
+        let answerLastName = answer.update.split(" ")[1];
+        const removeEmployee = results.find(element => element.first_name === answerFirstName && element.last_name === answerLastName);
+        connection.query(
+          "DELETE FROM employee WHERE id = ?",
+            [removeEmployee.id],
+          function(err, res) {
+            if (err) throw err;
+            console.log(res.affectedRows + " employee deleted!\n");
+            startQuestions();
+          }
+        );
+      })
+    })
+  }
