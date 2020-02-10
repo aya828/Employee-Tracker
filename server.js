@@ -5,20 +5,20 @@ const cTable = require("console.table");
 const connection = mysql.createConnection({
   host: "localhost",
 
-  // Your port; if not 3306
+  // Port
   port: 3306,
 
-  // Your username
+  // Username
   user: "root",
 
-  // Your password
+  // Password
   password: "Baxter#828",
-  database: "employee_db"
+  database: "employee_db",
+
+  multipleStatements: true
 });
 
-connection.connect(function(err) {
-  if (err) throw err;
-  console.log("connected as id " + connection.threadId + "\n");
+const startQuestions = () => {
   inquirer.prompt(questions)
   .then (function(resp) {
     switch (resp.choice) {
@@ -36,9 +36,13 @@ connection.connect(function(err) {
         break;
     }
   });
+} 
+
+connection.connect(function(err) {
+  if (err) throw err;
+  console.log("connected as id " + connection.threadId + "\n");
+  startQuestions();
 });
-
-
 
 const questions = [
   {
@@ -61,63 +65,26 @@ const addEmp = [
     message: "What is the employee's last name?"
   },
   {
-    type: "input",
+    type: "list",
     name: "role",
-    message: "What is the employee's role?"
-  },
-  {
-    type: "input",
-    name: "department",
-    message: "What department is the employee in?"
-  },
-  {
-    type: "input",
-    name: "salary",
-    message: "What is the employee's salary?"
-  },
-  {
-    type: "input",
-    name: "manager",
-    message: "Who is the employee's manager?",
-  }
-]
-
-const updateEmp = [
-  {
-    type: "choice",
-    name: "update",
-    message: "Which employee role would you like to update?"
+    message: "Choose a role:",
+    choices: ['Sales Specialist', 'Sales', 'Engineer', 'Manager']
   }
 ]
 
 // Function to see exitsing employee table
 function showEmployees() {
-  connection.query("SELECT * FROM employee", function(err, res) {
-    console.table([{
-      id: "SELECT id FROM employee",
-      first_name: "SELECT first_name FROM employee",
-      last_name: "SELECT last_name FROM employee",
-      title: "SELECT title FROM role",
-      department: "SELECT name FROM department",
-      salary: "SELECT salary FROM role",
-      manager: "SELECT manager FROM employee"
-    }])
-    
-    if (err) throw err;
-    // Log all results of the SELECT statement
-    console.log(res);
-    connection.end();
+  connection.query(
+    "SELECT e.first_name, e.last_name, r.title, r.salary, d.name, r.manager FROM employee e INNER JOIN role r ON e.role_id = r.id INNER JOIN department d ON r.department_id = d.id", 
+    function(err, res) {
+      if (err) throw err;
+      // Log all results of the SELECT statement
+      console.table(res),
+      console.log(res);
+      // connection.end();
+      startQuestions();
   });
-  
-  }
-  // console.log("Selecting all products...\n");
-  // connection.query("SELECT * FROM products", function(err, res) {
-  //   if (err) throw err;
-  //   // Log all results of the SELECT statement
-  //   console.log(res);
-  //   connection.end();
-  // });
-
+}
 
 // Function for creating new employee
 function createEmployee() {
@@ -125,65 +92,76 @@ function createEmployee() {
   inquirer.prompt(addEmp)
 
   .then(function(response) {
-    var query = connection.query(
+    let role_id;
+    let manager_id;
+    if(response.role === "Sales Specialist") {
+      role_id = 1;
+      manager_id = 1;
+      department_id = 1;
+    } else if(response.role === "Sales") {
+      role_id = 2;
+      manager_id = 2;
+      department_id = 2;
+    } else if(response.role === "Engineer") {
+      role_id = 3;
+      manager_id = 3;
+      department_id = 3;
+    } else if(response.role === "Manager") {
+      role_id = 4;
+      manager_id = 4;
+      department_id = 4;
+    }
+    let query = connection.query(
+      "INSERT INTO employee SET ?",
       {
+        role_id: role_id,
+        manager_id: manager_id,
         first_name: response.first_name,
-        last_name: response.last_name,
-        title: response.role,
-        department: response.department,
-        salary: response.salary,
-        manager: response.manager
-      }
-    )
-    console.log(query.sql)
+        last_name: response.last_name,          
+      },
+      function(err, res) {
+        if (err) throw err;
+        console.log(res.affectedRows + " employee inserted!\n");
+      })
+    console.log(query.sql);
+    startQuestions();
   })
-  // console.log("Inserting a new product...\n");
-  // var query = connection.query(
-  //   "INSERT INTO products SET ?",
-  //   {
-  //     flavor: "Rocky Road",
-  //     price: 3.0,
-  //     quantity: 50
-  //   },
-  //   function(err, res) {
-  //     if (err) throw err;
-  //     console.log(res.affectedRows + " product inserted!\n");
-  //     // Call updateProduct AFTER the INSERT completes
-  //     updateProduct();
-  //   }
-  // );
-
-  // // logs the actual query being run
-  // console.log(query.sql);
 }
 
-// Functiojn to update employee information (department, salary, role, etc.)
+// Function to update employee information (department, salary, role, etc.)
 function updateEmployee() {
-  // console.log("Updating all Rocky Road quantities...\n");
-  // var query = connection.query(
-  //   "UPDATE products SET ? WHERE ?",
-  //   [
-  //     {
-  //       quantity: 100
-  //     },
-  //     {
-  //       flavor: "Rocky Road"
-  //     }
-  //   ],
-  //   function(err, res) {
-  //     if (err) throw err;
-  //     console.log(res.affectedRows + " products updated!\n");
-  //     // Call deleteProduct AFTER the UPDATE completes
-  //     deleteProduct();
-  //   }
-  // );
-
-  // // logs the actual query being run
-  // console.log(query.sql);
-}
-
+  connection.query("SELECT id, first_name, last_name FROM employee", function(err, results) {
+    if (err) throw err;
+    // once you have the items, prompt the user for which they'd like to bid on
+    inquirer
+      .prompt([
+        {
+          name: "choice",
+          type: "rawlist",
+          choices: function() {
+            var choiceArray = [];
+            for (var i = 0; i < results.length; i++) {
+              choiceArray.push(results[i].id, results[i].first_name, results[i].last_name);
+            }
+            return console.table(results.id, results.first_name, results.last_name);
+          },
+          message: "Who's role would you like to update?"
+        }
+      ])
+      .then(function(answer) {
+        // get the information of the chosen item
+        var chosenItem;
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].item_name === answer.choice) {
+            chosenItem = results[i];
+          }
+        }
+      })    
+    })
+  }
+    
 // Function to delete existing employee
-function deleteEmployee() {
+// function deleteEmployee() {
   // console.log("Deleting all strawberry icecream...\n");
   // connection.query(
   //   "DELETE FROM products WHERE ?",
@@ -197,15 +175,4 @@ function deleteEmployee() {
   //     readProducts();
   //   }
   // );
-}
-
-// Function to see exitsing employee table
-function readEmployee() {
-  // console.log("Selecting all products...\n");
-  // connection.query("SELECT * FROM products", function(err, res) {
-  //   if (err) throw err;
-  //   // Log all results of the SELECT statement
-  //   console.log(res);
-  //   connection.end();
-  // });
-}
+// }
