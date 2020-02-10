@@ -80,17 +80,13 @@ function showEmployees() {
       if (err) throw err;
       // Log all results of the SELECT statement
       console.table(res),
-      console.log(res);
-      // connection.end();
       startQuestions();
   });
 }
 
 // Function for creating new employee
 function createEmployee() {
-
   inquirer.prompt(addEmp)
-
   .then(function(response) {
     let role_id;
     let manager_id;
