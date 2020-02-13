@@ -25,7 +25,19 @@ const startQuestions = () => {
       case 'View all employees':
         showEmployees();
         break;
+      case 'View all departments':
+        showDepartments();
+        break;
+      case 'View all roles':
+        showRoles();
+        break;
       case 'Add employee':
+        createEmployee();
+        break;
+      case 'Add department':
+        createEmployee();
+        break;
+      case 'Add role':
         createEmployee();
         break;
       case 'Update employee':
@@ -49,7 +61,7 @@ const questions = [
     type: 'list',
     name: 'choice',
     message: 'What would you like to do?',
-    choices: ['View all employees', 'Add employee', 'Update employee', 'Delete employee']
+    choices: ['View all employees', 'View all departments', 'View all roles', 'Add department', 'Add role', 'Add employee', 'Update employee', 'Delete employee']
   }
 ]
 
@@ -76,6 +88,28 @@ const addEmp = [
 function showEmployees() {
   connection.query(
     "SELECT e.first_name, e.last_name, r.title, r.salary, d.name, r.manager FROM employee e INNER JOIN role r ON e.role_id = r.id INNER JOIN department d ON r.department_id = d.id", 
+    function(err, res) {
+      if (err) throw err;
+      // Log all results of the SELECT statement
+      console.table(res),
+      startQuestions();
+  });
+}
+
+function showDepartments() {
+  connection.query(
+    "SELECT d.id, d.name FROM department d", 
+    function(err, res) {
+      if (err) throw err;
+      // Log all results of the SELECT statement
+      console.table(res),
+      startQuestions();
+  });
+}
+
+function showRoles() {
+  connection.query(
+    "SELECT r.id, r.title, r.salary, r.manager FROM role r", 
     function(err, res) {
       if (err) throw err;
       // Log all results of the SELECT statement
